@@ -31,4 +31,4 @@ jobs:
 
       - name: Build and push images
         run: |
-          docker buildx build --push --platform linux/amd64,linux/arm64 --tag ghcr.io/${{ github.repository }}/valhalla:cb-locate-intersections .
+          docker buildx build --push --platform linux/amd64,linux/arm64 --tag ghcr.io/${{ github.repository }}/gisops-valhalla:cb-locate-intersections .
