@@ -151,6 +151,11 @@ if test -f "${CONFIG_FILE}"; then
   jq --arg d "${TRANSIT_DIR}" '.mjolnir.transit_dir = $d' "${CONFIG_FILE}"| sponge "${CONFIG_FILE}"
   jq --arg d "${TRAFFIC_TAR}" '.mjolnir.traffic_extract = $d' "${CONFIG_FILE}"| sponge "${CONFIG_FILE}"
   jq --arg d "${server_threads}" '.mjolnir.concurrency = $d' "${CONFIG_FILE}"| sponge "${CONFIG_FILE}"
+
+  # custom: filter pedestrian and bike 
+  jq 'mjolnir.include_bicycle = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
+  jq 'mjolnir.include_pedestrian = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
+
 else
   additional_data_elevation="--additional-data-elevation $ELEVATION_PATH"
   mjolnir_admin="--mjolnir-admin ${ADMIN_DB}"
