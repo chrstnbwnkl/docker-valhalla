@@ -246,8 +246,8 @@ fi
 if [[ "${do_build}" == "True" ]] || [[ updated_default_speed_config == "True" ]]; then
 
   # custom: filter pedestrian and bike 
-  jq 'mjolnir.include_bicycle = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
-  jq 'mjolnir.include_pedestrian = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
+  jq '.mjolnir.include_bicycle = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
+  jq '.mjolnir.include_pedestrian = false' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
 
   echo ""
   echo "==============================="
