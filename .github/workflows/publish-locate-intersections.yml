@@ -6,7 +6,6 @@ on:
       - "cb-locate-intersections"
     paths-ignore:
       - ".gitignore"
-      - "**.md"
 
 jobs:
   publish:
