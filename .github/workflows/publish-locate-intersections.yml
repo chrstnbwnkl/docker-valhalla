@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "cb-locate-intersections"
-    paths-ignore:
-      - ".gitignore"
 
 jobs:
   publish:
