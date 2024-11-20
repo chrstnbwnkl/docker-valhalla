@@ -14,7 +14,7 @@ RUN cd /usr/local/bin && \
   cd .. && mv $preserve ./bin
 
 FROM ubuntu:24.04 as runner_base
-MAINTAINER Nils Nolde <nils@gis-ops.com>
+LABEL MAINTAINER Nils Nolde <nils@gis-ops.com>
 
 RUN apt-get update > /dev/null && \
   export DEBIAN_FRONTEND=noninteractive && \
