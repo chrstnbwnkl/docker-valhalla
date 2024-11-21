@@ -4,7 +4,7 @@
 # with the previous runner's artifacts
 ARG VALHALLA_BUILDER_IMAGE=ghcr.io/chrstnbwnkl/valhalla:cb-locate-intersections
 FROM $VALHALLA_BUILDER_IMAGE as builder
-MAINTAINER Nils Nolde <nils@gis-ops.com>
+LABEL MAINTAINER Nils Nolde <nils@gis-ops.com>
 
 # remove some stuff from the original image
 RUN cd /usr/local/bin && \
