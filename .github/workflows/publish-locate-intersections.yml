@@ -1,9 +1,6 @@
 name: publish locate intersections branch
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - "cb-locate-intersections"
 
 jobs:
   publish:
