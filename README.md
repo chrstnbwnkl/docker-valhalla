@@ -1,4 +1,4 @@
-[![ci tests](https://github.com/gis-ops/docker-valhalla/actions/workflows/tests.yml/badge.svg)](https://github.com/gis-ops/docker-valhalla/actions/workflows/tests.yml)
+[![ci tests](https://github.com/nilsnolde/docker-valhalla/actions/workflows/tests.yml/badge.svg)](https://github.com/nilsnolde/docker-valhalla/actions/workflows/tests.yml)
 
 > Note: This contains changes to include full road segments on `/locate`
 
@@ -10,9 +10,10 @@ A hyper-flexible Docker image for the excellent [Valhalla](https://github.com/va
 # download a file to custom_files and start valhalla
 mkdir custom_files
 wget -O custom_files/andorra-latest.osm.pbf https://download.geofabrik.de/europe/andorra-latest.osm.pbf
-docker run -dt --name valhalla_gis-ops -p 8002:8002 -v $PWD/custom_files:/custom_files ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+docker run -dt --name valhalla_gis-ops -p 8002:8002 -v $PWD/custom_files:/custom_files ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
+
 # or let the container download the file for you
-docker run -dt --name valhalla_gis-ops -p 8002:8002 -v $PWD/custom_files:/custom_files -e tile_urls=https://download.geofabrik.de/europe/andorra-latest.osm.pbf ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+docker run -dt --name valhalla_gis-ops -p 8002:8002 -v $PWD/custom_files:/custom_files -e tile_urls=https://download.geofabrik.de/europe/andorra-latest.osm.pbf ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
 ```
 
 This image aims at being user-friendly and most efficient with your time and resources. Once built, you can easily change Valhalla's configuration, the underlying OSM data graphs are built from, accompanying data (like Admin Areas, elevation tiles) or even pre-built graph tiles. Upon `docker restart <container>` those changes are taken into account via **hashed files**, and, if necessary, new graph tiles will be built automatically.
@@ -24,18 +25,17 @@ This image aims at being user-friendly and most efficient with your time and res
 - Load and build from **multiple URLs** pointing to valid pbf files.
 - Load local data through volume mapping.
 - **Supports auto rebuild** on OSM file changes through hash mapping.
--     **new**: supports advanced user management to avoid sudo access to host-shared folders and files, see [notes on user management](#notes-on-user-management)
+- **new**: supports advanced user management to avoid sudo access to host-shared folders and files, see [notes on user management](#notes-on-user-management)
 
 ## Dockerhub/Github Packages
 
-**NOTE**, with the recent (17.03.2023) announcement of Docker to remove free "teams" (even those providing FOSS like us), we moved our images to Github packages. If it's not on Github you'll find an image version still on Dockerhub.
-
-Our [package registry](https://github.com/gis-ops/docker-valhalla/pkgs/container/docker-valhalla%2Fvalhalla) provides the following:
+Our [package registry](https://github.com/nilsnolde/docker-valhalla/pkgs/container/docker-valhalla%2Fvalhalla) provides the following:
 
 - stable release tags (e.g. 3.0.9)
 - `latest`, updated from Valhalla Github repository every Saturday morning
 
-> Note, you might have to do a [`docker login`](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-docker-registry#authenticating-to-github-packages) before.
+> [!NOTE]
+> You might have to do a [`docker login`](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-docker-registry#authenticating-to-github-packages) before.
 
 ## Build the image
 
@@ -44,50 +44,54 @@ If you want to build the image yourself, be aware that you might need to adapt t
 - `VALHALLA_UID`: specify the user UID for the container-internal `valhalla` user. Either leave this blank or, most usually, specify your current user's UID.
 - `VALHALLA_GID`: specify the group GID for the container-internal `valhalla` user. Either leave this blank or, most usually, specify the group's GID whose members you want to have write access to the container-generated files.
 
-**Note**, before Valhalla version `3.1.0` the building scheme was completely different. Please contact enquiry@gis-ops.com if you need access to previous Valhalla versions via Docker.
+> [!NOTE]
+> before Valhalla version `3.1.0` the building scheme was completely different.
 
 Then it's a simple
 
 ```shell script
-docker build -t ghcr.io/gis-ops/docker-valhalla/valhalla:latest .
+docker build -t ghcr.io/nilsnolde/docker-valhalla/valhalla:latest .
 ```
 
 ## Environment variables
 
-This image respects the following custom environment variables to be passed during container startup. Note, all variables have a default:
+This image respects the following custom environment variables to be passed during container startup:
 
-- `tile_urls`: Add as many (space-separated) URLs as you like, e.g. https://download.geofabrik.de/europe/andorra-latest.osm.pbf
-- `use_tiles_ignore_pbf`: `True` uses a local tile.tar file and skips building. Default `True`.
-- `force_rebuild`: `True` forces a rebuild of the routing tiles and sets `build_tar` to `Force`. Default `False`.
-- `build_elevation`: `True` downloads elevation tiles which are covering the routing graph. `Force` will do the same, but first delete any existing elevation tiles. Default `False`.
-- `build_admins`: `True` builds the admin db needed for things like border-crossing penalties and detailed routing responses. `Force` will do the same, but first delete the existing db. Default `False`.
-- `build_time_zones`: `True` builds the timezone db which is needed for time-dependent routing. `Force` will do the same, but first delete the existing db. Default `False`.
-- `build_transit`: `True` will attempt to build transit tiles if none exist yet. `Force` will remove existing transit **and** routing tiles. Default `False`.
-- `build_tar` (since 29.10.2021/v`3.1.5`): `True` creates a tarball of the tiles including an index which allows for extremely faster graph loading after reboots. `Force` will do the same, but first delete the existing tarball. Default `True`.
-- `server_threads`: How many threads `valhalla_build_tiles` will use and `valhalla_service` will run with. Default is the value of `nproc`. If valhalla kills it self when building tiles, lower this number.
-- `path_extension`: This path will be appended to the container-internal `/custom_files` (and by extension to the docker volume mapped to that path) and will be the directory where all files will be created. Can be very useful in certain deployment scenarios. No leading/trailing path separator allowed. Default is ''.
-- `serve_tiles`: `True` starts the valhalla service. Default `True`.
-- `tileset_name`: The name of the resulting graph on disk. Very useful in case you want to build multiple datasets in the same directory. Default `valhalla_tiles`.
-- `traffic_name`: The name of the traffic.tar. Again, useful for serving mulitple traffic archives from the same directory. If empty, i.e. "", then no traffic archive will be built. Default `traffic.tar`.
-- `update_existing_config`: `True` updates missing keys in existing valhalla.json. Useful for updating stale config files to include newly introduced config parameters. Default `True`.
-- `use_default_speeds_config`: `True` loads a JSON file used to enhance default speeds (or falls back to an existing `custom_files/default_speeds.json`) and sets the respective config entry. Read more [here](https://github.com/OpenStreetMapSpeeds/schema). Default `False`.
-- `default_speeds_config_url`: Remote location of the `default_speeds_config` JSON. Default `https://raw.githubusercontent.com/OpenStreetMapSpeeds/schema/master/default_speeds.json`
+| Environment Variable | Default | Description |
+|--|--|--|
+| `tile_urls` |  | Add as many (space-separated) URLs as you like, e.g. https://download.geofabrik.de/europe/andorra-latest.osm.pbf |
+| `use_tiles_ignore_pbf` | `True` | `True` uses a local tile.tar file and skips building. |
+| `force_rebuild` | `False` | `True` forces a rebuild of the routing tiles and sets `build_tar` to `Force`. |
+| `build_elevation` | `False` | `True` downloads elevation tiles which are covering the routing graph. <br> `Force` will do the same, but first delete any existing elevation tiles. |
+| `build_admins` | `False` | `True` builds the admin db needed for things like border-crossing penalties and detailed routing responses. <br> `Force` will do the same, but first delete the existing db. |
+| `build_time_zones`| `False` | `True` builds the timezone db which is needed for time-dependent routing. <br> `Force` will do the same, but first delete the existing db. |
+| `build_transit` | `False` | `True` will attempt to build transit tiles if none exist yet.  <br>`Force` will remove existing transit **and** routing tiles. |
+| `build_tar` (since 29.10.2021/v`3.1.5`) | `True` | `True` creates a tarball of the tiles including an index which allows for extremely faster graph loading after reboots. <br> `Force` will do the same, but first delete the existing tarball. |
+| `server_threads` | value of `nproc` | How many threads `valhalla_build_tiles` will use and `valhalla_service` will run with. <br> If valhalla kills itself when building tiles, lower this number.  |
+| `path_extension` | `''` | This path will be appended to the container-internal `/custom_files` (and by extension to the docker volume mapped to that path) and will be the directory where all files will be created. <br> Can be very useful in certain deployment scenarios. No leading/trailing path separator allowed. |
+| `serve_tiles` | `True` | `True` starts the valhalla service. |
+| `tileset_name` | `valhalla_tiles` | The name of the resulting graph on disk.<br>Very useful in case you want to build multiple datasets in the same directory. |
+| `traffic_name` | `traffic.tar` | The name of the `traffic.tar`.<br>Setting this to be empty (i.e. `""`) will cause no traffic archive to be built.<br>Again, useful for serving mulitple traffic archives from the same directory. |
+| `update_existing_config` | `True` | `True` updates missing keys in existing `valhalla.json`.<br>Useful for updating stale config files to include newly introduced config parameters. |
+| `use_default_speeds_config` | `False` | `True` loads a JSON file used to enhance default speeds (or falls back to an existing `custom_files/default_speeds.json`) and sets the respective config entry. Read more [here](https://github.com/OpenStreetMapSpeeds/schema). |
+| `default_speeds_config_url` | [this url](https://raw.githubusercontent.com/OpenStreetMapSpeeds/schema/master/default_speeds.json) | Remote location of the `default_speeds_config` JSON. |
 
 ## Container recipes
 
-For the following instructions to work, you'll need to have the image locally available already, either from [Github Docker registry](https://github.com/gis-ops/docker-valhalla/pkgs/container/docker-valhalla%2Fvalhalla) or from [local](#build-the-image).
+For the following instructions to work, you'll need to have the image locally available already, either from [Github Docker registry](https://github.com/nilsnolde/docker-valhalla/pkgs/container/docker-valhalla%2Fvalhalla) or from [local](#build-the-image).
 
 Start a background container from that image:
 
 ```bash
-docker run -dt -v $PWD/custom_files:/custom_files -p 8002:8002 --name valhalla ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+docker run -dt -v $PWD/custom_files:/custom_files -p 8002:8002 --name valhalla ghcr.io/nilsnolde/docker-valhalla/valhalla:latest
 ```
 
 The important part here is, that you map a volume from your host machine to the container's **`/custom_files`**. The container will dump all relevant Valhalla files to that directory.
 
 At this point Valhalla is running, but there is no graph tiles yet. Follow the steps below to customize your Valhalla instance in a heartbeat.
 
-> Note, alternatively you could create `custom_files` on your host before starting the container with all necessary files you want to be respected, e.g. the OSM PBF files.
+> [!NOTE]
+> Alternatively you could create `custom_files` on your host before starting the container with all necessary files you want to be respected, e.g. the OSM PBF files.
 
 #### Build Valhalla with transit
 
@@ -98,7 +102,7 @@ Put the unzipped GTFS feeds as subfolders in the main gtfs folder, e.g. `gtfs_fe
 To enable `multimodal` routing, you'll need to map the directory which contains all the GTFS feeds to the container's `/gtfs_feeds` directory, e.g.
 
 ```
-docker run -dt -v gtfs_feeds:/gtfs_feeds -v $PWD/custom_files:/custom_files -p 8002:8002 --name valhalla gisops/valhalla:latest
+docker run -dt -v gtfs_feeds:/gtfs_feeds -v $PWD/custom_files:/custom_files -p 8002:8002 --name valhalla nilsnolde/docker-valhalla:latest
 ```
 
 #### Build Valhalla with arbitrary OSM data
@@ -141,11 +145,14 @@ In the case where you have a pre-built `valhalla_tiles.tar` package from another
 
 ## Tests
 
-If you want to verify that the image is working correctly, there's a small test script in `./tests`. **Note**, it might require `sudo`, since it touches a few things generated by the container's `valhalla` user:
+If you want to verify that the image is working correctly, there's a small test script in `./tests`.
 
 ```shell script
 ./tests/test.sh
 ```
+
+> [!TIP]
+> It might require `sudo`, since it touches a few things generated by the container's `valhalla` user
 
 ## Acknowledgements
 
