@@ -1,3 +1,4 @@
+#!/bin/bash
 set -u
 
 valhalla_image=$1
@@ -123,7 +124,7 @@ if [[ $? -eq 1 ]]; then
 fi
 
 line_count=$(diff -y --suppress-common-lines <(jq --sort-keys . "${custom_file_folder}/valhalla_base.json") <(jq --sort-keys . "${custom_file_folder}/valhalla.json") | wc -l)
-if [[ $line_count != "0" ]]; then
+if [[ $line_count -ne 0 ]]; then
   echo "Valhalla config was not updated correctly. Check the generated config files."
   exit 1
 fi
@@ -144,7 +145,7 @@ if [[ $? -eq 0 ]]; then
 fi
 
 line_count=$(diff -y --suppress-common-lines <(jq --sort-keys . "${custom_file_folder}/valhalla_base.json") <(jq --sort-keys . "${custom_file_folder}/valhalla.json") | wc -l)
-if [[ $line_count != "1" ]]; then
+if [[ $line_count -ne 1 ]]; then
   echo "valhalla.json should not have been updated but was"
   exit 1
 fi

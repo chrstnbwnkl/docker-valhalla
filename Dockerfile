@@ -4,7 +4,7 @@
 # with the previous runner's artifacts
 ARG VALHALLA_BUILDER_IMAGE=ghcr.io/chrstnbwnkl/valhalla:cb-locate-intersections
 FROM $VALHALLA_BUILDER_IMAGE as builder
-LABEL MAINTAINER Nils Nolde <nils@gis-ops.com>
+LABEL org.opencontainers.image.authors="nilsnolde+github@proton.me"
 
 # remove some stuff from the original image
 RUN cd /usr/local/bin && \
@@ -14,7 +14,7 @@ RUN cd /usr/local/bin && \
   cd .. && mv $preserve ./bin
 
 FROM ubuntu:24.04 as runner_base
-LABEL MAINTAINER Nils Nolde <nils@gis-ops.com>
+LABEL org.opencontainers.image.authors="nilsnolde+github@proton.me"
 
 RUN apt-get update > /dev/null && \
   export DEBIAN_FRONTEND=noninteractive && \

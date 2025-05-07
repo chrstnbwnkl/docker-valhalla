@@ -123,21 +123,28 @@ if test -f "${CONFIG_FILE}"; then
     # create temporary default config
     valhalla_build_config > ${TMP_CONFIG_FILE}  || exit 1
 
-    # for each path in the temp config (excluding array indices)
-    jq -r 'paths | select(map(type) | index("number") | not ) | "." + join(".")' ${TMP_CONFIG_FILE} | while read key ; do
+    # collect additions to make from the temp config (treating arrays as atomic values)
+    additions=$(jq --slurpfile A "${TMP_CONFIG_FILE}" --slurpfile B "${CONFIG_FILE}" -n '
+      def push(p;k): p+[k];
+      def missing(a;b;p):
+        if a|type=="object" then
+          reduce (a|keys_unsorted[]) as $k ([];
+            .+(
+              if b|has($k)|not then [{path:push(p;$k), dot:(push(p;$k)|join(".")), value:a[$k]}]
+              elif (a[$k]|type=="object") and (b[$k]|type=="object") then missing(a[$k];b[$k];push(p;$k))
+              else [] end))
+        else [] end;
+      missing($A[0];$B[0];[])
+    ')
 
-      # if the key path does not exist in the existing config 
-      jq -e "${key} | if type == \"null\" then false else true end" ${CONFIG_FILE} >/dev/null
-      if [ $? -eq 1 ]; then 
+    echo "$additions" | jq -r '.[] | "added \(.dot) with value \(.value)"'
 
-          # get its value from the temp config
-          newval=$(jq "${key}" ${TMP_CONFIG_FILE})
-          echo "INFO: copied new config entry ${key}=${newval} into existing config."
-
-          # and set it on the new one
-          jq --argjson d "${newval}" "${key} = \$d" "${CONFIG_FILE}"| sponge "${CONFIG_FILE}"
-      fi  
-    done 
+    # add all additions
+    jq --argjson additions "$additions" '
+      reduce $additions[] as $a (.;
+        setpath($a.path; $a.value)
+      )
+    ' "${CONFIG_FILE}" | sponge "${CONFIG_FILE}"
 
     rm ${TMP_CONFIG_FILE}
   fi
